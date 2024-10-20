@@ -1,39 +1,74 @@
 #include "tests.h"
 
 // 练习1，实现库函数strlen
-int my_strlen(char *str) {
-    /**
-     * 统计字符串的长度，太简单了。
-     */
-
-    // IMPLEMENT YOUR CODE HERE
-    return 0;
+#include <stddef.h> // 为了使用 size_t 类型，这是一种适合表示数组大小和循环计数器的无符号类型（可选）  
+  
+int my_strlen(char *str) {  
+    int length = 0;  
+  
+    
+    if (str == NULL) {  
+        return 0;  
+    }  
+  
+   
+    while (str[length] != '\0') {  
+        length++; 
+    }  
+  
+    return length;  
 }
 
 
 // 练习2，实现库函数strcat
-void my_strcat(char *str_1, char *str_2) {
-    /**
-     * 将字符串str_2拼接到str_1之后，我们保证str_1指向的内存空间足够用于添加str_2。
-     * 注意结束符'\0'的处理。
-     */
-
-    // IMPLEMENT YOUR CODE HERE
+#include <stddef.h> 
+void my_strcat(char *str_1, char *str_2) {  
+    if (str_1 == NULL || str_2 == NULL) {  
+        return; 
+    }  
+  
+    while (*str_1 != '\0') {  
+        str_1++;  
+    }  
+    while (*str_2 != '\0') {  
+        *str_1 = *str_2;  
+        str_1++;  
+        str_2++;  
+    }  
+  
+    *str_1 = '\0';  
 }
-
 
 // 练习3，实现库函数strstr
-char* my_strstr(char *s, char *p) {
-    /**
-     * 在字符串s中搜索字符串p，如果存在就返回第一次找到的地址，不存在就返回空指针(0)。
-     * 例如：
-     * s = "123456", p = "34"，应该返回指向字符'3'的指针。
-     */
+char* my_strstr(char *s, char *p) {  
+    
+    if (*p == '\0') {  
+        return s;  
+    }  
+  
 
-    // IMPLEMENT YOUR CODE HERE
-    return 0;
+    while (*s != '\0') {  
+       
+        char *s_original = s;  
+        char *p_copy = p;  
+  
+       
+        while (*s != '\0' && *p_copy != '\0' && *s == *p_copy) {  
+            s++;  
+            p_copy++;  
+        }  
+  
+     
+        if (*p_copy == '\0') {  
+            return s_original;  
+        }  
+  
+     
+    }  
+  
+  
+    return 0;  
 }
-
 
 /**
  * ================================= 背景知识 ==================================
@@ -76,149 +111,88 @@ char* my_strstr(char *s, char *p) {
 
 // 练习4，将彩色图片(rgb)转化为灰度图片
 void rgb2gray(float *in, float *out, int h, int w) {
-    /**
-     * 编写这个函数，将一张彩色图片转化为灰度图片。以下是各个参数的含义：
-     * (1) float *in:  指向彩色图片对应的内存区域（或者说数组）首地址的指针。
-     * (2) float *out: 指向灰度图片对应的内存区域（或者说数组）首地址的指针。
-     * (3) int h:      height，即图片的高度。
-     * (4) int w:      width，即图片的宽度。
-     *
-     * 提示：
-     * (1) in数组只管读取就行了，别修改它的值。out数组只修改不读取。
-     * (2) 利用公式 V = 0.1140 * B  + 0.5870 * G + 0.2989 * R 计算彩色图片每个
-     *     像素对应的灰度值，写到灰度图片相同的位置中就行。
-     * (3) 使用for循环来遍历每个位置。利用图片在内存中的存储顺序，计算出每个位置像素
-     *     的地址。
-     *
-     * 考点：
-     * (1) for循环的使用。
-     * (2) 内存的访问。
-     */
-
-    // IMPLEMENT YOUR CODE HERE
-    // ...
+    // 遍历图片的每个像素
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            // 计算当前像素在彩色图片中的地址
+            int index = (i * w + j) * 3; // 每个像素有3个分量，所以乘以3
+            // 读取当前像素的RGB分量
+            float r = in[index];
+            float g = in[index + 1];
+            float b = in[index + 2];
+            // 计算灰度值
+            float v = 0.1140 * b + 0.5870 * g + 0.2989 * r;
+            // 将计算出的灰度值写入灰度图片对应的位置
+            out[i * w + j] = v;
+        }
+    }
 }
 
 // 练习5，实现图像处理算法 resize：缩小或放大图像
 void resize(float *in, float *out, int h, int w, int c, float scale) {
-    /**
-     * 图像处理知识：
-     *  1.单线性插值法
-     *      假设有两个已知 点1(x1, y1) 和 点2(x2, y2)，
-     *      点1 的值为v1，点2 的值为v2，
-     *      待插值点 (x, y)处于 点1 和 点2 中间，值为 v，
-     *      如下图所示(*表示点，/表示三个点在一条直线上)：
-     *
-     *                                * (x2, y2), v2
-     *                               /
-     *                              /
-     *                             * (x, y), v
-     *                            /
-     *                           * (x1, y1), v1
-     *
-     *      则满足下面的条件：
-     *                    x2 - x          x - x1
-     *          v = v1 * ———————— + v2 * ————————
-     *                    x2 - x1         x2 - x1
-     *      也就是说，v的值是 点1 和 点2 的值的加权平均值，权重与到两点的距离相关
-     *      (公式中的 x也可以是 y，因为是在一条直线上)。
-     *
-     *  2.双线性插值法
-     *     2.1 由于图片是二维的，每个像素点有两个方向可以用来插值，所以可以使用双线性插值法。
-     *     假设有四个已知 P1(x1, y2), P2(x2, y2), P3(x1, y1), P4(x2, y1)，
-     *      如下图（看起来是在一条直线上就是在一条直线上）
-     *
-     *          P1(x1, y2)                      P2(x2, y2)
-     *              *                               *
-     *
-     *                              * P(x, y)
-     *
-     *              *                               *
-     *          P3(x1, y1)                      P4(x2, y1)
-     *
-     *      2.2 核心思想：
-     *          双线性差值相当于三次差值，如下图所示：
-     *
-     *              P1(x1, y2)      Q1(x, y2)       P2(x2, y2)
-     *                  *               *               *
-     *
-     *                                  * P(x, y)
-     *
-     *                  *               *               *
-     *              P3(x1, y1)      Q2(x, y1)       P4(x2, y1)
-     *
-     *          先用单线性插值法计算出 Q1 和 Q2 的值，再用单线性插值法计算出 P 的值，即
-     *                     x2 - x          x - x1
-     *          Q1 = P1 * ———————— + P2 * ————————
-     *                     x2 - x1         x2 - x1
-     *
-     *                     x2 - x          x - x1
-     *          Q2 = P3 * ———————— + P4 * ————————
-     *                     x2 - x1         x2 - x1
-     *
-     *                    y2 - y          y - y1
-     *          Q = Q1 * ———————— + Q2 * ————————
-     *                    y2 - y1         y2 - y1
-     *
-     *      2.3 化简：
-     *          记 Dx = x2 - x1, Dy = y2 - y1, dx = x - x1, dy = y - y1，
-     *
-     *                     (Dx - dx)(Dy - dy)         dx(Dy - dy)
-     *          Q = P1 * ———————————————————— + P2 * ————————————— +
-     *                          Dx * Dy                 Dx * Dy
-     *
-     *                    (Dx - dx)dy           dxdy
-     *              P3 * ————————————— + P4 * —————————
-     *                      Dx * Dy            Dx * Dy
-     *
-     *  3. 双线性插值用于 resize 图片
-     *      记 原图为 src，目标图为 dst，
-     *         比例 dst宽高 = src宽高 * scale，
-     *      设一个点 resize 后的坐标为 (x, y)，resize 前的坐标为 (x', y')，
-     *      则有 x' = x / scale, y' = y / scale，
-     *
-     *      现在，对于每个目标图片中的像素点 (x, y)：
-     *          1. 找到对应的源图片中的像素点 (x', y')
-     *          2. 找到其在原图中的四个邻居点 (这四个邻居是相邻的四个点，组成一个正方形)
-     *          3. 用双线性插值法计算出 该像素点 的值
-     *
-     *      不难发现，在这种情况下：Dx = Dy = 1（原图中相邻的四个像素横竖距离是1）
-     *      所以，上面的公式可以化简为：
-     *          Q = P1 * (1 - dx)(1 - dy) + P2 * dx(1 - dy)
-     *            + P3 * (1 - dx)dy + P4 * dxdy
-     * HINT:
-     *     1. 对于每个 dst 中的像素点 (x, y)，先计算出其在 src 中的坐标 float(x0, y0)，
-     *     2. 然后计算出其在 src 中的四个邻居点:
-     *        x1 = static_cast<int>(x0), y1 = static_cast<int>(y0)
-     *        上面这样可以直接将 float 通过下取整的方式转换为 int，
-     *        剩下三个邻居就好找了
-     *     3. 注意上面的方法中，四个邻居点的坐标可能会超出 src 的范围，
-     *        所以需要对其进行边界检查
-     */
+    int new_h = (int)(h * scale);
+    int new_w = (int)(w * scale);
 
-    int new_h = h * scale, new_w = w * scale;
-    // IMPLEMENT YOUR CODE HERE
+    // 遍历目标图像的每个像素
+    for (int y = 0; y < new_h; ++y) {
+        for (int x = 0; x < new_w; ++x) {
+            // 计算目标像素在原图中的坐标
+            float x0 = x / scale;
+            float y0 = y / scale;
 
-}
+            // 计算原图中的四个邻居点的坐标
+            int x1 = (int)x0;
+            int y1 = (int)y0;
+            int x2 = (x1 < w - 1) ? x1 + 1 : x1;
+            int y2 = (y1 < h - 1) ? y1 + 1 : y1;
+
+            // 计算四个邻居点的插值权重
+            float dx = x0 - x1;
+            float dy = y0 - y1;
+
+            // 遍历每个颜色通道
+            for (int i = 0; i < c; ++i) {
+                // 计算目标像素的值
+                float value = 0;
+                value += (1 - dx) * (1 - dy) * in[(y1 * w + x1) * c + i];
+                value += dx * (1 - dy) * in[(y1 * w + x2) * c + i];
+                value += (1 - dx) * dy * in[(y2 * w + x1) * c + i];
+                value += dx * dy * in[(y2 * w + x2) * c + i];
+
+                // 将计算出的值写入目标图像
+                out[(y * new_w + x) * c + i] = value;
+            }
+        }
+    }}
 
 
 // 练习6，实现图像处理算法：直方图均衡化
-void hist_eq(float *in, int h, int w) {
-    /**
-     * 将输入图片进行直方图均衡化处理。参数含义：
-     * (1) float *in: 输入的灰度图片。
-     * (2) int h:     height，即图片的高度。
-     * (3) int w:      width，即图片的宽度。
-     *
-     * 参考资料：
-     * https://blog.csdn.net/qq_15971883/article/details/88699218
-     * 其它的博客也行。
-     *
-     * 提示：
-     * (1) 输入图片是灰度图，每个像素值是[0, 255]内的小数
-     * (2) 灰度级个数为256，也就是{0, 1, 2, 3, ..., 255}
-     * (3) 使用数组来实现灰度级 => 灰度级的映射
-     */
+#include <math.h>
+#include <stdlib.h>
 
-    // IMPLEMENT YOUR CODE HERE
+void hist_eq(float *in, float *out, int h, int w) {
+    // 计算直方图
+    int hist[256] = {0};
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            hist[(int)in[i * w + j]]++;
+        }
+    }
+
+    // 计算累积直方图
+    float cum_hist[256] = {0};
+    float sum = 0;
+    for (int i = 0; i < 256; ++i) {
+        sum += hist[i];
+        cum_hist[i] = sum / (h * w);
+    }
+
+    // 映射原图像的像素值
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            int idx = (int)in[i * w + j];
+            // 累积直方图值映射到[0, 255]区间
+            out[i * w + j] = cum_hist[idx] * 255;
+        }
+    }
 }
